@@ -6,12 +6,9 @@ function [M] = assembleM(XA,TA,dof,Nef,rho)
 %         Nef: number of finite elements
 %         rho: density
 % Gauss Quadrature 2 points in each direction
-xi1 = -1/sqrt(3);
-xi2 = 1/sqrt(3);
-eta1 = -1/sqrt(3);
-eta2 = 1/sqrt(3);
-w1 = 1;
-w2 = 1;
+w = [1 1 1 1];
+eta = [-1/sqrt(3) -1/sqrt(3) 1/sqrt(3) 1/sqrt(3)];
+ksi = [-1/sqrt(3) 1/sqrt(3) 1/sqrt(3) -1/sqrt(3)];
 % Nodal shape functions
 N1 = @(xi, eta) 1/4*(1-xi)*(1-eta);
 N2 = @(xi, eta) 1/4*(1+xi)*(1-eta);
@@ -20,24 +17,23 @@ N4 = @(xi, eta) 1/4*(1-xi)*(1+eta);
 N = @(xi,eta) [N1(xi,eta) 0 N2(xi,eta) 0 N3(xi,eta) 0 N4(xi, eta) 0;
     0 N1(xi,eta) 0 N2(xi,eta) 0 N3(xi, eta) 0 N4(xi,eta)];
 
-% Strain matrix
-B = @(xi,eta) [-(1-eta)/4 0 (1-eta)/4 0 (1+eta)/4 0 -(1+eta)/4 0 ;
-    0 -(1-xi)/4 0 -(1+xi)/4 0 (1+xi)/4 0 (1-xi)/4 ;
-    -(1-xi)/4 -(1-eta)/4 -(1+xi)/4 (1-eta)/4 (1+xi)/4 (1+eta)/4 (1-xi)/4 -(1+eta)/4];
-% Derivative of N
-dN = @(xi,eta)[-(1-xi)/4 -(1-eta)/4 -(1+xi)/4 (1-eta)/4;
-    (1+xi)/4 (1+eta)/4 (1-xi)/4 -(1+eta)/4];
-
-
 M = zeros(size(XA,1)*dof, size(XA,1)*dof);
+
 % For each element
 for i = 1:Nef
    % Position of the nodes
    Xe = XA(TA(i,1:4),:);
+   nnodes = size(Xe,1);
    Te = TA(i,:);
    % Calculation of submatrix
-   me = rho*(w1*(w1*(N(xi1,eta1))'*N(xi1,eta1)*abs(det(dN(xi1,eta1)*Xe))+w2*(N(xi1,eta2))'*N(xi1,eta2))*abs(det(dN(xi1,eta2)*Xe))+...
-       w2*(w1*(N(xi2,eta1))'*N(xi2,eta1)*abs(det(dN(xi2,eta1)*Xe))+w2*(N(xi2,eta2))'*N(xi2,eta2)*abs(det(dN(xi2,eta2)*Xe))));
+   me = zeros(2*nnodes);
+   for k=1:4
+       dN = [ -(1-eta(k))  (1-eta(k))  (1+eta(k)) -(1+eta(k));
+	           -(1-ksi(k)) -(1+ksi(k))  (1+ksi(k))  (1-ksi(k)) ]/4;
+       local_N = N(ksi(k),eta(k));
+       J = dN*Xe;
+       me = me + rho*w(k)*( local_N'*local_N )*abs(det(J));
+    end
    % Define global address vector ig( ) for element dofs.
    ne=4; dof=2;
    ig  = zeros(1,ne*dof);
