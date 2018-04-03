@@ -113,24 +113,30 @@ Sig=zeros(3*pg,size(TB,1));
 % Reshape for plotting
 subplot(2,2,1);
 coord1=0:Le_1:L1;
-axis([0 L1 -5 5]);
+coord2=L1:Le_2:L2+L1;
+axis([0 (L1+L2) -5 5]);
 set(gca,'NextPlot','replacechildren');
 size1= size(coord1,2);
-plot(coord1,u1(1:2:102),'k-','linewidth',2);
+plot(coord1,u1(1:2:102),'k-',coord2,u2(1:2:82),'r-','linewidth',2);
 
 subplot(2,2,2);
 coord1=0:Le_1:L1;
-axis([0 L1 -5 5]);
+coord2=L1:Le_2:L2+L1;
+axis([0 (L1+L2) -5 5]);
 set(gca,'NextPlot','replacechildren');
-plot(coord1,u1(2:2:102),'k-','linewidth',2);
+plot(coord1,u1(2:2:102),'k-',coord2,u2(2:2:82),'r-','linewidth',2);
 
 subplot(2,2,[3,4]);
+% SDA
 X_plot(1:51,1) = XA(1:51,1); X_plot(1:51,2) = XA(52:102,1);
 Y_plot(1:51,1) = XA(1:51,2); Y_plot(1:51,2) = XA(52:102,2);
-surf(X_plot,Y_plot,zeros(size(X_plot)));
-surf(X_plot,Y_plot,zeros(size(X_plot)),ones(size(X_plot)));
-
-axis([0 L1 0 h -1 5]);
+% SDB
+X_plot(103:143,1) = XB(1:41,1); X_plot(103:143,2) = XB(42:82,1);
+Y_plot(103:143,1) = XA(1:41,2); Y_plot(103:143,2) = XB(42:82,2);
+surf(X_plot,Y_plot,ones(size(X_plot)));
+shading interp 
+view(2);
+axis([0 (L1+L2) 0 h -1 5]);
 axis(gca,'on');
 F(ntps_1) = struct('cdata',[],'colormap',[]);
 F(1) = getframe(gcf);
@@ -174,8 +180,7 @@ for tt = 2:ntps_1
     % Reshape for plotting
     X_plot(1:51,1) = XA_new(1:51,1); X_plot(1:51,2) = XA_new(52:102,1);
     Y_plot(1:51,1) = XA_new(1:51,2); Y_plot(1:51,2) = XA_new(52:102,2);
-    surf(X_plot,Y_plot,zeros(size(X_plot)),Z);
-    surf(X_plot,Y_plot,zeros(size(X_plot)),Z+ones(size(Z)));
+    surf(X_plot,Y_plot,Z);
     F(tt)=getframe;
     % time step
     t1=t1+dt1;
