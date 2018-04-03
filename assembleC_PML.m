@@ -18,7 +18,9 @@ fe2 = @(y) a0(2)*((y-h)/L2)^n;
 fp1 = @(x) b0(1)*((x-x0)/L2)^n; 
 fp2 = @(y) b0(2)*((y-h)/L2)^n;
 % function fc
-fc = @(x) (1+fe1(x(1)))*fp2(x(2))+(1+fe2(x(2)))*fp1(x(1));
+%fc = @(x) (1+fe1(x(1)))*fp2(x(2))+(1+fe2(x(2)))*fp1(x(1));  % Pas sur de
+%celle ci
+fc = @(x) fp1(x(1));
 % number of nodes in an element
 nn = size(TB,2)-1;
 % Gauss quadrature 2 points (In each direction)
@@ -44,6 +46,7 @@ for ii = 1:size(TB,1)
        M = (1/4)*[((1-ksi(k))*(1-eta(k))) ((1+ksi(k))*(1-eta(k))) ((1+ksi(k))*(1+eta(k))) ((1-ksi(k))*(1+eta(k)))] ;
        % Global coordinates
        J = dN*Xe;
+       fc(M*Xe)
        ce = ce + rho*fc(M*Xe)*(cs/b)*w(k)*(N'*N)*abs(det(J)); 
    end
    % assemble
