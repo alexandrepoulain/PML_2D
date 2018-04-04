@@ -61,12 +61,11 @@ diagM = zeros(NA,1) ;
 for i=1:NA 
   diagM(i) = sum(MA(i,1:NA)) ;
 end
-dt2 = 0.025;
 %%%%%%%%%%%%%%% SDB %%%%%%%%%%%%%%%
 n = 2; % order for attenuation functions
 Rpp = 1e-3; % reflexion wanted
 alpha_kucu = sqrt(E_1/rho_1)*(n+1)/(2*L2)*log(1/Rpp); % attenuation coefficient calculated by Kucukcoban
-%alpha_kucu = 0;
+% alpha_kucu = 0;
 a0 = [alpha_kucu,alpha_kucu]; % coefficient of attenuation evanescent waves
 b0 = [alpha_kucu,alpha_kucu]; % coefficient of attenuation propagating waves
 x0 = L1; % start of the PML
@@ -189,7 +188,8 @@ for tt = 2:ntps_1
     v2(83) = v1(203);
     u2(1) = u1(101);
     u2(83) = u1(203);
-
+    a2(1) = a1(101);
+    a2(83) = a1(203);
     
     % Predictors on SDB
     t2=t2+dt2; % increment
@@ -197,7 +197,7 @@ for tt = 2:ntps_1
     
     vp2 = v2+dt2*(1-gamma2)*a2;
     % calculation of acceleration
-    P_past= P_past + (CCB+CB)*vp2 + (KKB+KB)*up2 
+    P_past= P_past + (CCB+CB)*vp2 + (KKB+KB)*up2 ;
     a2= (inv_M_eff) * (-P_past);
     % update
     u2 = beta2*(dt2)^2*a2+up2;
@@ -205,14 +205,12 @@ for tt = 2:ntps_1
   
     v1(101) = v2(1);
     v1(203) = v2(83);
-    u1(101) = u2(1);
-    u1(203) = u2(83);
     a1(101) = a2(1);
     a1(203) = a2(83);
 
     
     % Junction
-    % Continuity of displacement
+    % Continuity of displacement, velocity and acceleration
     
     % Update of physical quantities
     [P_past,vect_epsi_n_2,vect_epsi_n,vect_sig_n,vect_Epsi_n,...

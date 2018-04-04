@@ -14,7 +14,6 @@ P_past = zeros(nnB*dof,1); % reset P_past to 0
 % if we are in the case of 2 gauss points in each direction
 switch ng
     case 2
-        'here'
         for i=1:Nef_2
             % Get back the effective displacement for the different nodes
             disp_ef = u2(global_pos_elemB(:,i)); 
