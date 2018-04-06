@@ -65,13 +65,13 @@ end
 n = 2; % order for attenuation functions
 Rpp = 1e-3; % reflexion wanted
 alpha_kucu = sqrt(E_1/rho_1)*(n+1)/(2*L2)*log(1/Rpp); % attenuation coefficient calculated by Kucukcoban
-% alpha_kucu = 0;
+alpha_kucu = 0;
 a0 = [alpha_kucu,alpha_kucu]; % coefficient of attenuation evanescent waves
 b0 = [alpha_kucu,alpha_kucu]; % coefficient of attenuation propagating waves
 x0 = L1; % start of the PML
 % Coordinates and connectivity matrix
 [XB,TB] = topology(L1,0,L1+L2,h,NSx_2,NSy_2);
-% go from local to global and in 2D
+% From local to global and in 2D
 global_pos_elemB = zeros(4*dof,size(TB,1));
 for i=1:size(TB,1)
     nnodes = size(TB,2)-1;  
@@ -186,8 +186,6 @@ for tt = 2:ntps_1
     
     v2(1) = v1(101);
     v2(83) = v1(203);
-    u2(1) = u1(101);
-    u2(83) = u1(203);
     a2(1) = a1(101);
     a2(83) = a1(203);
     
@@ -226,26 +224,26 @@ for tt = 2:ntps_1
     plot(coord1,u1(1:2:102),'k-',coord2,u2(1:2:82),'r-','linewidth',2);
     subplot(2,2,2);
     plot(coord1,u1(2:2:102),'k-',coord2,u2(2:2:82),'r-','linewidth',2);
-    subplot(2,2,[3,4]);
-    XA_new(1:102,1) = XA(:,1) + u1(1:2:204);
-    XA_new(1:102,2) = XA(:,2) + u1(2:2:204);
-    XA_new(103:184,1) = XB(:,1) + u2(1:2:164);
-    XA_new(103:184,2) = XB(:,2) + u2(2:2:164);
-    Z(1:51,1) = u1(1:2:102); Z(1:51,2) = u1(103:2:204);
-    Z(52:92,1) = u2(1:2:82); Z(52:92,2) = u2(83:2:164);
-    % SDA
-    X_plot(1:51,1) = XA_new(1:51,1); X_plot(1:51,2) = XA_new(52:102,1);
-    Y_plot(1:51,1) = XA_new(1:51,2); Y_plot(1:51,2) = XA_new(52:102,2);
-    % SDB
-    X_plot(52:92,1) = XA_new(103:143,1); X_plot(52:92,2) = XA_new(144:184,1);
-    Y_plot(52:92,1) = XA_new(103:143,2); Y_plot(52:92,2) = XA_new(144:184,2);
-
-    surf(X_plot,Y_plot,Z);
-    axis([0 (L1+L2) 0 h -1 5]);
-    caxis([-1 1]);
-    colorbar
-    shading interp
-    view(2)
+%     subplot(2,2,[3,4]);
+%     XA_new(1:102,1) = XA(:,1) + u1(1:2:204);
+%     XA_new(1:102,2) = XA(:,2) + u1(2:2:204);
+%     XA_new(103:184,1) = XB(:,1) + u2(1:2:164);
+%     XA_new(103:184,2) = XB(:,2) + u2(2:2:164);
+%     Z(1:51,1) = u1(1:2:102); Z(1:51,2) = u1(103:2:204);
+%     Z(52:92,1) = u2(1:2:82); Z(52:92,2) = u2(83:2:164);
+%     % SDA
+%     X_plot(1:51,1) = XA_new(1:51,1); X_plot(1:51,2) = XA_new(52:102,1);
+%     Y_plot(1:51,1) = XA_new(1:51,2); Y_plot(1:51,2) = XA_new(52:102,2);
+%     % SDB
+%     X_plot(52:92,1) = XA_new(103:143,1); X_plot(52:92,2) = XA_new(144:184,1);
+%     Y_plot(52:92,1) = XA_new(103:143,2); Y_plot(52:92,2) = XA_new(144:184,2);
+% 
+%     surf(X_plot,Y_plot,Z);
+%     axis([0 (L1+L2) 0 h -1 5]);
+%     caxis([-1 1]);
+%     colorbar
+%     shading interp
+%     view(2)
     F(tt)=getframe;
     % time step
     tt
