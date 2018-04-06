@@ -11,8 +11,10 @@ gamma = 0.5; beta = 0.25;       % Implicit
 
 % Time stepping parameters
 omega=2*pi;                     % pulsation
-dt=[0.001:0.1:10];            % time step
+dt=[0.001:0.001:10];            % time step
 Omega = omega*dt ;              % frequency
+l_Omega = Omega - 4.0 ;
+[val_min,i_min] = min(abs(l_Omega)) ;
 
 % Parameters of the material
 rho = 1700;                     % density
@@ -62,6 +64,7 @@ MB = assembleM_PML(rho,XB,TB,a0,x0,L2,h,n,dof);
 KB = assembleK_PML(rho,cs,b_scal,XB,TB,a0,b0,x0,L2,h,n,dof);
 % damping
 CB = assembleC_PML(rho,cs,b_scal,XB,TB,a0,b0,x0,L2,h,n,dof);
+%% Calculation
 for i=1:length(dt)
     i
     % Calculation of these matrices here because they depend on dt 
@@ -91,25 +94,50 @@ for i=1:length(dt)
        AD_xi(i,k)= -log(lambda_xi(i,k)) / abs(angle(d_xi(i,k)));
     end
 end
-% plots
+%% plots
 % eigen values in imaginary plan
 figure(1) ;
 clf ;
 for i = 1:length(dt)
-    for k = 1:length(d_xi(i,:)) 
-        if mod(i,20)==0 
-            plot(eigen_val((i-1)*2+1,:)...
-                ,eigen_val((i-1)*2+2,:),'+');
-            hold on ;
-        end
+    if mod(i,20)==0 
+        plot(eigen_val((i-1)*2+1,:)...
+            ,eigen_val((i-1)*2+2,:),'+');
+        hold on ;
     end
 end
 grid on ;
 axis equal ;
 axis([-2 2 -2 2]) ;
 
+% spectral radius
+figure(2) ;
+clf ;
+for i = 1:length(dt)
+    if mod(i,20)==0 
+        semilogx(Omega(i),lambda_xi(i,:),'+') ;
+        hold on ;
+    end
+end
+grid on ;
+
+%% Periodicity error
+figure(3) ;
+clf ;
+for i = 1:i_min
+    plot(Omega(i),PE_xi(i,:),'+') ;
+    hold on ;
+end
+grid on ;
 
 
+% numerical damping ratio
+figure(4) ;
+clf ;
+for i = 1:i_min
+    plot(Omega(i),AD_xi(i,:),'+') ;
+    hold on ;
+end
+grid on ;
 
 
 
