@@ -22,10 +22,15 @@ Q = [cos(theta) sin(theta);
 dN = @(k)1/4*[-(1-eta(k))  (1-eta(k))  (1+eta(k)) -(1+eta(k)); 
 	          -(1-ksi(k)) -(1+ksi(k))  (1+ksi(k))  (1-ksi(k))];
 % Function of attenuation in 2D
-fe1 = @(x) a0(1)*((x-x0)/L2)^n; 
-fe2 = @(y) a0(2)*((y-h)/L2)^n;
-fp1 = @(x) b0(1)*((x-x0)/L2)^n; 
-fp2 = @(y) b0(2)*((y-h)/L2)^n;
+fe1 = @(x) a0(1)*((x-x0)/L2)^n * (x>x0); 
+fe2 = @(y) a0(2)*((y-h)/L2)^n * (y>h);
+fp1 = @(x) b0(1)*((x-x0)/L2)^n*(x>x0); 
+fp2 = @(y) b0(2)*((y-h)/L2)^n*(y>h);
+% stability
+% fe1 = @(x) a0(1); 
+% fe2 = @(y) a0(2);
+% fp1 = @(x) b0(1); 
+% fp2 = @(y) b0(2);
 % Matrix Fp, Fe, Fte, Ftp
 Fe = @(x) Q'*[1+fe1(x(1)) 0; 0 1+fe2(x(2))]*Q;
 Fp = @(x) Q'*[(cs/b_scal)*fp1(x(1)) 0; 0 (cs/b_scal)*fp2(x(2))]*Q;
@@ -60,8 +65,8 @@ for kk=1:4
    Ntp = [tempFtp(1,1)*tempdN(1,kk)+tempFtp(2,1)*tempdN(2,kk);
           tempFtp(1,2)*tempdN(1,kk)+tempFtp(2,2)*tempdN(2,kk)];   
    % Calculation of B tilde matrices
-   Bte = [Nte(1) 0; 0 Nte(2); Nte(1) Nte(2)];
-   Btp = [Ntp(1) 0; 0 Ntp(2); Ntp(1) Ntp(2)];
+   Bte = [Nte(1) 0; 0 Nte(2); Nte(2) Nte(1)];
+   Btp = [Ntp(1) 0; 0 Ntp(2); Ntp(2) Ntp(1)];
    Mat_B(:,ind:ind+1) = Bte + dt*Btp;
    Mat_Bp(:,ind:ind+1) = Btp;
    ind=ind+2;

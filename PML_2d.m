@@ -7,7 +7,7 @@ A = 1; % Amplitude
 
 
 %% Material parameters
-% SDA
+%%%%%%%%%%%%%%% SDA %%%%%%%%%%%%%%%
 rho_1 = 1700; % density
 nu_1 = 0.24; % Poisson modulus
 E_1 = 1e07; % Young modulus
@@ -20,7 +20,7 @@ lmbd_s = cs*tp; % wave length of shear wave
 b_scal = cs;
 L1 = 250; % Size of the soil
 h = 5; % width of the plane
-Lef = 5; % Length of finite element
+Lef = 5;
 Nef = floor(L1 / Lef) ; % number of finite element in SDA
 Nex = Nef; % nb elem in x direction
 Ney = 1; % nb elem in y direction
@@ -32,42 +32,20 @@ dof = 2; % Per element
 % Square elements
 a = Lef;
 b = Lef;
-% SDB
+%%%%%%%%%%%%%%% SDB %%%%%%%%%%%%%%%
 L2 = 200;   % Length of the PML
 Le_2 = 5;   % Length of an element
 Nef_2 = floor( L2 / Le_2 ); % Number of elements
 % Number of nodes
 NSx_2 = Nef_2 ; % number of nodes in x-direction
 NSy_2 = 1 ; % number of nodes in y-direction
-%% Time evolution
-% parameters
-dt_CFL = min(a,b) / sqrt(E_1/rho_1) ;
-dt1 = dt_CFL*0.8;
-dt2 = dt_CFL*0.8;
-t_fin = 100.;
-ntps_1 = round(t_fin/dt1);
-gamma1=0.5; beta1=0.25;    % Implicit Newmark
-gamma2=0.5; beta2=0.25; % Implicit Newmark
-%% Matrices construction
-%%%%%%%%%%%%%%% SDA %%%%%%%%%%%%%%%
-% mass 
-MA = assembleM(XA,TA,dof,Nef,rho_1);
-% stiffness
-KA = assembleK(XA,TA,dof,E_1,nu_1,Nef);
-% Lumped mass matrix 
-% nombre de ddls total
-NA = dof * size(XA,1) ;
-diagM = zeros(NA,1) ;
-for i=1:NA 
-  diagM(i) = sum(MA(i,1:NA)) ;
-end
-%%%%%%%%%%%%%%% SDB %%%%%%%%%%%%%%%
 n = 2; % order for attenuation functions
 Rpp = 1e-3; % reflexion wanted
 alpha_kucu = sqrt(E_1/rho_1)*(n+1)/(2*L2)*log(1/Rpp); % attenuation coefficient calculated by Kucukcoban
-alpha_kucu = 0;
-a0 = [alpha_kucu,alpha_kucu]; % coefficient of attenuation evanescent waves
-b0 = [alpha_kucu,alpha_kucu]; % coefficient of attenuation propagating waves
+% alpha_kucu = 0;
+% The coefficient along  y-direction is null 
+a0 = [alpha_kucu,0]; % coefficient of attenuation evanescent waves
+b0 = [alpha_kucu,0]; % coefficient of attenuation propagating waves
 x0 = L1; % start of the PML
 % Coordinates and connectivity matrix
 [XB,TB] = topology(L1,0,L1+L2,h,NSx_2,NSy_2);
@@ -81,6 +59,44 @@ for i=1:size(TB,1)
         end
     end
 end
+
+%% global Topology
+% construction of the parameters arrays
+% param_med = {'MED', rho_1, nu_1, E_1, mu_1, lmbd_1, k_1, cs, cp, lmbd_s,...
+%     b_scal, L1, h, Nef, Nex, Ney, Le_1, dof};
+% param_PML = {'PML', rho_1, nu_1, E_1, mu_1, lmbd_1, k_1, cs, cp, lmbd_s,...
+%     b_scal, L2, h, Nef_2, NSx_2, NSy_2, Le_2, dof, a0, b0, x0};
+% param_interface = {'inter', rho_1, nu_1, E_1, mu_1, lmbd_1, k_1, cs, cp, ...
+%     lmbd_s, b_scal, L2, h, Nef_2, NSx_2, NSy_2, Le_2, dof, a0, b0, x0};
+% [globX,globT,paramX] = global_topology(XA,TA,XB,TB,interfaceA,...
+%     interfaceB,param_Med,param_PML,param_interface);
+%% Time evolution
+% parameters
+dt_CFL = min(a,b) / sqrt(E_1/rho_1) ;
+dt1 = dt_CFL*0.8;
+dt2 = dt_CFL*0.8;
+t_fin = 100.;
+ntps_1 = round(t_fin/dt1);
+gamma1=0.5; beta1=0.25;    % Implicit Newmark
+gamma2=0.5; beta2=0.25;    % Implicit Newmark
+% gamma1=0.5; beta1=0.0;    % Explicit Newmark
+% gamma2=0.5; beta2=0.0;    % Explicit Newmark
+%% Matrices construction
+%%%%%%%%%%%%%%% SDA %%%%%%%%%%%%%%%
+% mass 
+MA = assembleM(XA,TA,dof,Nef,rho_1);
+% stiffness
+KA = assembleK(XA,TA,dof,E_1,nu_1,Nef);
+% Damping
+CA = zeros(size(KA));
+% Lumped mass matrix 
+% nombre de ddls total
+NA = dof * size(XA,1) ;
+diagM = zeros(NA,1) ;
+for i=1:NA 
+  diagM(i) = sum(MA(i,1:NA)) ;
+end
+
 % Matrices of PML
 % mass
 MB = assembleM_PML(rho_1,XB,TB,a0,x0,L2,h,n,dof);
@@ -96,9 +112,14 @@ CCB = assemble_effCB_PML(k_1,mu_1,cs,b_scal,dt2,XB,TB,a0,b0,x0,L2,h,n,dof);
 M_eff= (MB+gamma2*dt2*(CB+CCB)+ beta2*(dt2)^2*(KB+KKB));
 M_eff=sparse(M_eff);
 % inverse
-inv_M_eff=inv(M_eff) ;
+inv_M_eff=inv(M_eff);
 %% Nodes at the interface
 [interfaceA, interfaceB] = count_nodes_interface(L1,XA,XB);
+
+%% Construct global matrices
+
+% [M_global, K_global, C_global] = construct_global(XA, TA, XB, TB, ...
+%     interfaceA, interfaceB, MA,KA,CA,MB,KB,CB,KKB,CCB, dof);
 
 
 %% Initializing

@@ -9,9 +9,14 @@ function [MB] = assembleM_PML(rho,XB,TB,a0,x0,L2,h,n,dof)
 %         h: length of the medium in y direction
 %         n: order of the attenuation functions
 %         dof: deggres of freedom for a node
+
+
 % Function of attenuation in 2D
-fe1 = @(x) a0(1)*((x-x0)/L2)^n; 
-fe2 = @(y) a0(2)*((y-h)/L2)^n;
+fe1 = @(x) a0(1)*((x-x0)/L2)^n * (x>x0); 
+fe2 = @(y) a0(2)*((y-h)/L2)^n * (y>h);
+% for stability analysis
+% fe1 = @(x) a0(1); 
+% fe2 = @(y) a0(2);
 % function fm
 fm = @(x) (1+fe1(x(1)))*(1+fe2(x(2)));
 % number of nodes in an element

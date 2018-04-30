@@ -13,10 +13,15 @@ function [CB] = assembleC_PML(rho,cs,b,XB,TB,a0,b0,x0,L2,h,n,dof)
 %         n: order of the attenuation functions
 %         dof: deggres of freedom for a node
 % Function of attenuation in 2D
-fe1 = @(x) a0(1)*((x-x0)/L2)^n; 
-fe2 = @(y) a0(2)*((y-h)/L2)^n;
-fp1 = @(x) b0(1)*((x-x0)/L2)^n; 
-fp2 = @(y) b0(2)*((y-h)/L2)^n;
+fe1 = @(x) a0(1)*((x-x0)/L2)^n * (x>x0); 
+fe2 = @(y) a0(2)*((y-h)/L2)^n * (y>h);
+fp1 = @(x) b0(1)*((x-x0)/L2)^n*(x>x0); 
+fp2 = @(y) b0(2)*((y-h)/L2)^n*(y>h);
+% stability
+% fe1 = @(x) a0(1); 
+% fe2 = @(y) a0(2);
+% fp1 = @(x) b0(1); 
+% fp2 = @(y) b0(2);
 % function fc
 %fc = @(x) (1+fe1(x(1)))*fp2(x(2))+(1+fe2(x(2)))*fp1(x(1));  % Pas sur de
 %celle ci

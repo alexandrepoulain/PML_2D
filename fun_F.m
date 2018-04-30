@@ -1,4 +1,4 @@
-function [Mat_FQ, Mat_Feps] = fun_F(a0,b0,x0,h,L2,n,cs,b_scal,dt,y)
+function [Mat_FQ, Mat_Feps] = fun_F(a0,b0,x0,h,L2,n,cs,b_scal,dt,y,Xe)
 % This function calculates the Feps amd FQ matrices
 % Inputs: a0,b0 : coefficients of attenuation in both directions
 %         x0: start of PML in x direction
@@ -15,10 +15,15 @@ function [Mat_FQ, Mat_Feps] = fun_F(a0,b0,x0,h,L2,n,cs,b_scal,dt,y)
 theta = 0;
 Q = [cos(theta) sin(theta); -sin(theta) cos(theta)];
 % Function of attenuation in 2D
-fe1 = @(x) a0(1)*((x-x0)/L2)^n; 
-fe2 = @(y) a0(2)*((y-h)/L2)^n;
-fp1 = @(x) b0(1)*((x-x0)/L2)^n; 
-fp2 = @(y) b0(2)*((y-h)/L2)^n;
+fe1 = @(x) a0(1)*((x-x0)/L2)^n * (x>x0); 
+fe2 = @(y) a0(2)*((y-h)/L2)^n * (y>h);
+fp1 = @(x) b0(1)*((x-x0)/L2)^n*(x>x0); 
+fp2 = @(y) b0(2)*((y-h)/L2)^n*(y>h);
+% stability
+% fe1 = @(x) a0(1); 
+% fe2 = @(y) a0(2);
+% fp1 = @(x) b0(1); 
+% fp2 = @(y) b0(2);
 % Matrix Fp, Fe, Fte, Ftp
 Fe = @(x) Q'*[1+fe1(x(1)) 0; 0 1+fe2(x(2))]*Q;
 Fp = @(x) Q'*[(cs/b_scal)*fp1(x(1)) 0; 0 (cs/b_scal)*fp2(x(2))]*Q;
@@ -32,7 +37,9 @@ Ftp = @(x) Q'*[(cs/b_scal)*fp2(x(2)) 0; 0 (cs/b_scal)*fp1(x(1))]*Q;
 Fl = @(x)(Fp(x)+(Fe(x)/dt))^(-1);
 Feps = @(x) Fe(x)*Fl(x);
 FQ = @(x) Fp(x)*Fl(x);
-tempFQ = FQ(y); tempFeps = Feps(y);
+M = [((1-y(1))*(1-y(2)))  ((1+y(1))*(1-y(2)))   ((1+y(1))*(1+y(2)))  ((1-y(1))*(1+y(2))) ]/4;
+pos = M*Xe;
+tempFQ = FQ(pos); tempFeps = Feps(pos);
 % Calculation of matrices
 Mat_FQ= zeros(3,3);
 

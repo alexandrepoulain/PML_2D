@@ -13,8 +13,11 @@ function [KB] = assembleK_PML(rho,cs,b,XB,TB,a0,b0,x0,L2,h,n,dof)
 %         n: order of the attenuation functions
 %         dof: deggres of freedom for a node
 % Function of attenuation in 2D
-fp1 = @(x) b0(1)*((x-x0)/L2)^n; 
-fp2 = @(y) b0(2)*((y-h)/L2)^n;
+fp1 = @(x) b0(1)*((x-x0)/L2)^n*(x>x0); 
+fp2 = @(y) b0(2)*((y-h)/L2)^n*(y>h);
+% stability
+% fp1 = @(x) b0(1); 
+% fp2 = @(y) b0(2);
 % function fc
 fk = @(x) fp1(x(1))*fp2(x(2));
 % number of nodes in an element

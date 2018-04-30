@@ -18,7 +18,7 @@ function [KKB] = assemble_effKB_PML(k,mu,cs,b_scal,dt,XB,TB,a0,b0,x0,L2,h,n,dof)
 D  = [k+4/3*mu k-2*mu/3 0
 	  k-2*mu/3 k+4/3*mu 0
 	    0      0        mu]; 
-    
+D = 1/dt*D;
 % angle of incidence
 theta = 0;
 % Rotation matrix
@@ -31,13 +31,18 @@ w = [5/9*5/9 5/9*8/9 5/9*5/9 8/9*5/9 8/9*8/9 8/9*5/9 5/9*5/9 5/9*8/9 5/9*5/9];
 eta = [-sqrt(3/5) -sqrt(3/5) -sqrt(3/5) 0.         0. 0.        sqrt(3/5)  sqrt(3/5) sqrt(3/5)];
 ksi = [-sqrt(3/5) 0.         sqrt(3/5)  -sqrt(3/5) 0. sqrt(3/5) -sqrt(3/5) 0.        sqrt(3/5)];
 % material derivative
-dN = @(eta,ksi,k)1/4*[-(1-eta(k))  (1-eta(k))  (1+eta(k)) -(1+eta(k)); 
-	                -(1-ksi(k)) -(1+ksi(k))  (1+ksi(k))  (1-ksi(k))];
+dN = @(eta,ksi)1/4*[-(1-eta)  (1-eta)  (1+eta) -(1+eta); 
+	                -(1-ksi) -(1+ksi)  (1+ksi)  (1-ksi)];
 % Function of attenuation in 2D
-fe1 = @(x) a0(1)*((x-x0)/L2)^n; 
-fe2 = @(y) a0(2)*((y-h)/L2)^n;
-fp1 = @(x) b0(1)*((x-x0)/L2)^n; 
-fp2 = @(y) b0(2)*((y-h)/L2)^n;
+fe1 = @(x) a0(1)*((x-x0)/L2)^n * (x>x0); 
+fe2 = @(y) a0(2)*((y-h)/L2)^n * (y>h);
+fp1 = @(x) b0(1)*((x-x0)/L2)^n*(x>x0); 
+fp2 = @(y) b0(2)*((y-h)/L2)^n*(y>h);
+% stability
+% fe1 = @(x) a0(1); 
+% fe2 = @(y) a0(2);
+% fp1 = @(x) b0(1); 
+% fp2 = @(y) b0(2);
 % Matrix Fp, Fe, Fte, Ftp
 Fe = @(x) Q'*[1+fe1(x(1)) 0; 0 1+fe2(x(2))]*Q;
 Fp = @(x) Q'*[(cs/b_scal)*fp1(x(1)) 0; 0 (cs/b_scal)*fp2(x(2))]*Q;
@@ -56,19 +61,19 @@ for ii = 1:size(TB,1)
    kke = zeros(dof*nn,dof*nn);
    % For each node
    Bt = zeros(3,8);Bq = zeros(3,8);
-   ind=1;
    for k=1:ng^2
        M = (1/4)*[((1-ksi(k))*(1-eta(k))) ((1+ksi(k))*(1-eta(k))) ((1+ksi(k))*(1+eta(k))) ((1-ksi(k))*(1+eta(k)))] ;
        pos = M*Xe; % position of the node in natural coordinates 
        % calculation of the matrices
        tempFl = Fl(pos);
-       tempdN = dN(eta,ksi,k);
+       tempdN = dN(eta(k),ksi(k));
        J = tempdN*Xe;
        tempdN = J\tempdN;
+       
        tempFq = Fq(pos);
        tempFte = Fte(pos); tempFtp = Ftp(pos);
        ind = 1;
-       for kk=1:4
+       for kk=1:nn
            % calculation of Nl,Bq,Nte and Ntp
            Nl = [tempFl(1,1)*tempdN(1,kk)+tempFl(1,2)*tempdN(2,kk);
                  tempFl(2,1)*tempdN(1,kk)+tempFl(2,2)*tempdN(2,kk)];
@@ -80,14 +85,14 @@ for ii = 1:size(TB,1)
            Ntp = [tempFtp(1,1)*tempdN(1,kk)+tempFtp(2,1)*tempdN(2,kk);
                   tempFtp(1,2)*tempdN(1,kk)+tempFtp(2,2)*tempdN(2,kk)];   
            % Calculation of B tilde matrices
-           Bte = [Nte(1) 0; 0 Nte(2); Nte(1) Nte(2)];
-           Btp = [Ntp(1) 0; 0 Ntp(2); Ntp(1) Ntp(2)];
+           Bte = [Nte(1) 0; 0 Nte(2); Nte(2) Nte(1)];
+           Btp = [Ntp(1) 0; 0 Ntp(2); Ntp(2) Ntp(1)];
            Bt(:,ind:ind+1) = Bte + dt*Btp;
            ind=ind+2;
        end
        % for each gauss point
-       J = tempdN*Xe;
-       kke = kke + w(k)*1/dt*(Bt'*D*Bq)*abs(det(J));
+       J = dN(eta(k),ksi(k))*Xe;
+       kke = kke + w(k)*(Bt'*D*Bq)*abs(det(J));
    end
    % assemble
    % Define global address vector ig( ) for element dofs.

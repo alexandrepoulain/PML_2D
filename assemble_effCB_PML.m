@@ -31,20 +31,21 @@ dN = @(eta,ksi)1/4*[-(1-eta)  (1-eta)  (1+eta) -(1+eta);
 theta = 0;
 Q = [cos(theta) sin(theta); -sin(theta) cos(theta)];
 % Function of attenuation in 2D
-fe1 = @(x) a0(1)*((x-x0)/L2)^n; 
-fe2 = @(y) a0(2)*((y-h)/L2)^n;
-fp1 = @(x) b0(1)*((x-x0)/L2)^n; 
-fp2 = @(y) b0(2)*((y-h)/L2)^n;
+fe1 = @(x) a0(1)*((x-x0)/L2)^n * (x>x0); 
+fe2 = @(y) a0(2)*((y-h)/L2)^n * (y>h);
+fp1 = @(x) b0(1)*((x-x0)/L2)^n*(x>x0); 
+fp2 = @(y) b0(2)*((y-h)/L2)^n*(y>h);
+% stability
+% fe1 = @(x) a0(1); 
+% fe2 = @(y) a0(2);
+% fp1 = @(x) b0(1); 
+% fp2 = @(y) b0(2);
 % Matrix Fp, Fe, Fte, Ftp
 Fe = @(x) Q'*[1+fe1(x(1)) 0; 0 1+fe2(x(2))]*Q;
 Fp = @(x) Q'*[(cs/b_scal)*fp1(x(1)) 0; 0 (cs/b_scal)*fp2(x(2))]*Q;
 Fte = @(x) Q'*[1+fe2(x(2)) 0; 0 1+fe1(x(1))]*Q;
 Ftp = @(x) Q'*[(cs/b_scal)*fp2(x(2)) 0; 0 (cs/b_scal)*fp1(x(1))]*Q;
-% Fe = @(x) Q'*[1+fe1(x(1)) 0; 0 1]*Q;
-% Fp = @(x) Q'*[(cs/b_scal)*fp1(x(1)) 0; 0 0]*Q;
-% Fte = @(x) Q'*[1 0; 0 1+fe1(x(1))]*Q;
-% Ftp = @(x) Q'*[0 0; 0 (cs/b_scal)*fp1(x(1))]*Q;
-% Matrix Fl, Fq
+% Matrix Fl, Feps
 Fl = @(x)(Fp(x)+(Fe(x)/dt))^(-1);
 Feps = @(x) Fe(x)*Fl(x);
 % number of nodes in an element
@@ -64,6 +65,7 @@ for ii = 1:size(TB,1)
        tempFl = Fl(pos);
        tempdN = dN(eta(k),ksi(k));
        J = tempdN*Xe;
+       
        tempdN = J\tempdN;
        tempFesp = Feps(pos);
        tempFte = Fte(pos); tempFtp = Ftp(pos);

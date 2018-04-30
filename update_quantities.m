@@ -83,25 +83,25 @@ switch ng
         vect_sig_n{8} = Mat_Dsig{8}*vect_epsi_n{8};
         vect_sig_n{9} = Mat_Dsig{9}*vect_epsi_n{9};
         % update of the integral of the strain 
-        vect_Epsi_n{1} = vect_Epsi_n{1} + DT*vect_epsi_n{1};
-        vect_Epsi_n{2} = vect_Epsi_n{2} + DT*vect_epsi_n{2};
-        vect_Epsi_n{3} = vect_Epsi_n{3} + DT*vect_epsi_n{3};
-        vect_Epsi_n{4} = vect_Epsi_n{4} + DT*vect_epsi_n{4};
-        vect_Epsi_n{5} = vect_Epsi_n{5} + DT*vect_epsi_n{5};
-        vect_Epsi_n{6} = vect_Epsi_n{6} + DT*vect_epsi_n{6};
-        vect_Epsi_n{7} = vect_Epsi_n{7} + DT*vect_epsi_n{7};
-        vect_Epsi_n{8} = vect_Epsi_n{8} + DT*vect_epsi_n{8};
-        vect_Epsi_n{9} = vect_Epsi_n{9} + DT*vect_epsi_n{9};
+        vect_Epsi_n{1} = vect_Epsi_n{1} + dt*vect_epsi_n{1};
+        vect_Epsi_n{2} = vect_Epsi_n{2} + dt*vect_epsi_n{2};
+        vect_Epsi_n{3} = vect_Epsi_n{3} + dt*vect_epsi_n{3};
+        vect_Epsi_n{4} = vect_Epsi_n{4} + dt*vect_epsi_n{4};
+        vect_Epsi_n{5} = vect_Epsi_n{5} + dt*vect_epsi_n{5};
+        vect_Epsi_n{6} = vect_Epsi_n{6} + dt*vect_epsi_n{6};
+        vect_Epsi_n{7} = vect_Epsi_n{7} + dt*vect_epsi_n{7};
+        vect_Epsi_n{8} = vect_Epsi_n{8} + dt*vect_epsi_n{8};
+        vect_Epsi_n{9} = vect_Epsi_n{9} + dt*vect_epsi_n{9};
         % update of the integral of the stress
-        vect_Sig_n{1} = vect_Sig_n{1} + DT*vect_sig_n{1};
-        vect_Sig_n{2} = vect_Sig_n{2} + DT*vect_sig_n{2};
-        vect_Sig_n{3} = vect_Sig_n{3} + DT*vect_sig_n{3};
-        vect_Sig_n{4} = vect_Sig_n{4} + DT*vect_sig_n{4};
-        vect_Sig_n{5} = vect_Sig_n{5} + DT*vect_sig_n{5};
-        vect_Sig_n{6} = vect_Sig_n{6} + DT*vect_sig_n{6};
-        vect_Sig_n{7} = vect_Sig_n{7} + DT*vect_sig_n{7};
-        vect_Sig_n{8} = vect_Sig_n{8} + DT*vect_sig_n{8};
-        vect_Sig_n{9} = vect_Sig_n{9} + DT*vect_sig_n{9};
+        vect_Sig_n{1} = vect_Sig_n{1} + dt*vect_sig_n{1};
+        vect_Sig_n{2} = vect_Sig_n{2} + dt*vect_sig_n{2};
+        vect_Sig_n{3} = vect_Sig_n{3} + dt*vect_sig_n{3};
+        vect_Sig_n{4} = vect_Sig_n{4} + dt*vect_sig_n{4};
+        vect_Sig_n{5} = vect_Sig_n{5} + dt*vect_sig_n{5};
+        vect_Sig_n{6} = vect_Sig_n{6} + dt*vect_sig_n{6};
+        vect_Sig_n{7} = vect_Sig_n{7} + dt*vect_sig_n{7};
+        vect_Sig_n{8} = vect_Sig_n{8} + dt*vect_sig_n{8};
+        vect_Sig_n{9} = vect_Sig_n{9} + dt*vect_sig_n{9};
 end
 
 end

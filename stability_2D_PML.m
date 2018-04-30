@@ -7,14 +7,7 @@ clear all; close all;
 
 % Newmark parameters
 gamma = 0.5; beta = 0.25;       % Implicit
-% gamma = 0.5; beta = 0;        % Explicit 
-
-% Time stepping parameters
-omega=2*pi;                     % pulsation
-dt=[0.001:0.001:10];            % time step
-Omega = omega*dt ;              % frequency
-l_Omega = Omega - 4.0 ;
-[val_min,i_min] = min(abs(l_Omega)) ;
+%gamma = 0.5; beta = 0;        % Explicit 
 
 % Parameters of the material
 rho = 1700;                     % density
@@ -26,27 +19,68 @@ bulk = E/3/(1-2*nu);            % Bulk modulus
 cs = (mu/rho)^0.5 ;             % Shear wave velocity
 cp = sqrt((lmbd+2*mu)/rho);     % Pressure wave velocity
 b_scal = cs;                    % scalar
-L1 = 250;                       % length of medium A
+L1 = 1;                       % length of medium A
 
 % Assembly element matrices for the 2D PML: M, C, Ceff, K, Keff
+Nef = 1;                      % number of elements
 Nex = 1; Ney = 1;             % One element in x and y direction
-Lex = 5; Ley = 5;             % Length of an element in x and y direction
-[XB,TB] = ...
+Lex = 1; Ley = 1;             % Length of an element in x and y direction
+[XA,TA] = ...
     topology(0,0,Lex,Ley,Nex,Ney); % Coordinates and connectivity matrix 
                        %(The element of PML starts at x_start = y_start= 0)
 nnodes = 4;                     % number of nodes in an element
 dof = 2;                        % number of degrees of freedom
 ng = 2;                         % order of quadrature
 
+% assemble mass and stiffness matrices
+% mass 
+M = assembleM(XA,TA,dof,Nef,rho);
+% % lumped Mass
+% NA = dof * nnodes ;
+% diagM = zeros(NA,1) ;
+% for i=1:NA 
+%   diagM(i) = sum(M(i,1:NA)) ;
+% end
+% %Only if explicit 
+% M = diag(diagM) ;
+% stiffness
+K = assembleK(XA,TA,dof,E,nu,Nef);
+
+% Calculation of iniial vibration modes
+[init_vec,init_modes] = eigenshuffle(M^-1*K);
+
+% Time stepping parameters
+omega= max(sqrt(init_modes));                    % pulsation
+
+% Time stepping parameters
+dt=[[1e-4:1e-4:1e-1]];            % time step
+Omega = omega*dt ;              % frequency
+l_Omega = Omega - 8.0 ;
+[val_min,i_min] = min(abs(l_Omega)) ;
+
+
+
+% Assembly element matrices for the 2D PML: M, C, Ceff, K, Keff
+Nex = 1; Ney = 1;             % One element in x and y direction
+Lex = 1; Ley = 1;             % Length of an element in x and y direction
+[XB,TB] = ...
+    topology(Lex,0,2*Lex,Ley,Nex,Ney); % Coordinates and connectivity matrix 
+                       %(The element of PML starts at x_start = y_start= 0)
+nnodes = 4;                     % number of nodes in an element
+dof = 2;                        % number of degrees of freedom
+ng = 2;                         % order of quadrature
+
 % Parameters for the PML
-L2 = 200; h = 5;                % length of PML, length in y direction 
+L2 = 1; h = 1;                % length of PML, length in y direction 
 n = 2;                          % order for attenuation functions
 Rpp = 1e-3;                     % reflexion wanted
 alpha_kucu = sqrt(E/rho)...
     *(n+1)/(2*L2)*log(1/Rpp);   % attenuation coefficient (ref:Kucukcoban)
-a0 = [alpha_kucu,alpha_kucu];   % coefficient attenuation evanescent waves
-b0 = [alpha_kucu,alpha_kucu];   % coefficient attenuation propagating waves
-x0 = L1;                       % start of the PML
+% a0 = [alpha_kucu,alpha_kucu];   % coefficient attenuation evanescent waves
+% b0 = [alpha_kucu,alpha_kucu];   % coefficient attenuation propagating waves
+a0 = [10,10];
+b0 = [10,10]; 
+x0 = 0;                       % start of the PML
 % From local to global and in 2D
 global_pos_elemB = zeros(ng^2*dof,size(TB,1));
 for i=1:size(TB,1)
@@ -60,6 +94,14 @@ end
 % Matrices of PML
 % mass
 MB = assembleM_PML(rho,XB,TB,a0,x0,L2,h,n,dof);
+% lumped Mass
+% NA = dof * nnodes ;
+% diagM = zeros(NA,1) ;
+% for i=1:NA 
+%   diagM(i) = sum(MB(i,1:NA)) ;
+% end
+% % Only if explicit 
+% MB = diag(diagM) ;
 % stiffness
 KB = assembleK_PML(rho,cs,b_scal,XB,TB,a0,b0,x0,L2,h,n,dof);
 % damping
@@ -79,20 +121,25 @@ for i=1:length(dt)
     B = calculation_amplification_B(dt(i),beta,gamma,bulk,mu,ng,TB,...
     XB,L2,n,a0,b0,x0,h,cs,b_scal,MB,CB,CCB,KB,KKB,nnodes,dof);
     % Calculation of the amplification matrix
-    A_xi = A^-1 * B;
-    % calculation of its eigenvalues (number of eig_val depends on ng)
-    d_xi(i,:)=eig(A_xi);
+    A_xi(:,:,i) = inv(A) * (-B);
+
+end
+[V,D]=eigenshuffle(A_xi);
+
+for i = 1:length(dt)
+       % calculation of its eigenvalues (number of eig_val depends on ng)
+    %d_xi(i,:)=eig(A_xi(:,:,i));
     % For each eigenvalue
-    for k = 1:size(d_xi(i,:),2)
-       eigen_val((i-1)*2+1,k) =  real(d_xi(i,k)); % real part
-       eigen_val((i-1)*2+2,k) =  imag(d_xi(i,k)); % imaginary part
+    for k = 1:size(D(:,i),1)
+       eigen_val((i-1)*2+1,k) =  real(D(k,i)); % real part
+       eigen_val((i-1)*2+2,k) =  imag(D(k,i)); % imaginary part
        % spectral radius
-       lambda_xi(i,k) = abs(d_xi(i,k));
+       lambda_xi(i,k) = abs(D(k,i));
        % relative periodicity error
-       PE_xi(i,k) = ( omega * dt(i) / abs(angle(d_xi(i,k))) ) - 1;
+       PE_xi(i,k) = ( omega * dt(i) / abs(angle(D(k,i))) ) - 1;
        % algorithmic damping ratio
-       AD_xi(i,k)= -log(lambda_xi(i,k)) / abs(angle(d_xi(i,k)));
-    end
+       AD_xi(i,k)= -log(lambda_xi(i,k)) / abs(angle(D(k,i)));
+    end 
 end
 %% plots
 % eigen values in imaginary plan
@@ -106,27 +153,37 @@ for i = 1:length(dt)
     end
 end
 grid on ;
+title('Eigenvalues in imaginary plan')
+
 axis equal ;
 axis([-2 2 -2 2]) ;
 
 % spectral radius
 figure(2) ;
 clf ;
-for i = 1:length(dt)
-    if mod(i,20)==0 
-        semilogx(Omega(i),lambda_xi(i,:),'+') ;
-        hold on ;
-    end
-end
+% for i = 1:length(dt)
+%     if mod(i,20)==0 
+        %semilogx(Omega(i),lambda_xi(i,:),'+') ;
+        
+%         hold on ;
+%     end
+% end
+semilogx(Omega(1:1:length(Omega)),lambda_xi(1:1:length(Omega),:),'.k') ;
+title('spectral radius')
+
 grid on ;
 
 %% Periodicity error
+tic
 figure(3) ;
 clf ;
 for i = 1:i_min
-    plot(Omega(i),PE_xi(i,:),'+') ;
+    plot(Omega(i),PE_xi(i,25:26),'+') ;
+    plot(Omega(i),PE_xi(i,21:22),'+') ;
     hold on ;
 end
+title('relative periodicity error')
+
 grid on ;
 
 
@@ -134,10 +191,13 @@ grid on ;
 figure(4) ;
 clf ;
 for i = 1:i_min
-    plot(Omega(i),AD_xi(i,:),'+') ;
+    plot(Omega(i),AD_xi(i,25:26),'+') ;
+    plot(Omega(i),AD_xi(i,21:22),'+') ;
     hold on ;
 end
+title('Numerical damping ratio')
+
 grid on ;
 
-
+toc
 
