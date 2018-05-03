@@ -7,8 +7,8 @@ clear all; close all;
 
 % Newmark parameters
 gamma = 0.5; beta = 0.25;       % Implicit
-%gamma = 0.5; beta = 0;        % Explicit 
-
+gamma = 0.5; beta = 0;        % Explicit 
+%x domaine
 % Parameters of the material
 rho = 1700;                     % density
 nu = 0.24;                      % Poisson modulus
@@ -53,7 +53,7 @@ K = assembleK(XA,TA,dof,E,nu,Nef);
 omega= max(sqrt(init_modes));                    % pulsation
 
 % Time stepping parameters
-dt=[[1e-4:1e-4:1e-1]];            % time step
+dt=[[1e-3:1e-3:1]];            % time step
 Omega = omega*dt ;              % frequency
 l_Omega = Omega - 8.0 ;
 [val_min,i_min] = min(abs(l_Omega)) ;
@@ -68,7 +68,7 @@ Lex = 1; Ley = 1;             % Length of an element in x and y direction
                        %(The element of PML starts at x_start = y_start= 0)
 nnodes = 4;                     % number of nodes in an element
 dof = 2;                        % number of degrees of freedom
-ng = 3;                         % order of quadrature
+ng = 2;                         % order of quadrature
 
 % Parameters for the PML
 L2 = 1; h = 1;                % length of PML, length in y direction 
@@ -78,8 +78,8 @@ alpha_kucu = sqrt(E/rho)...
     *(n+1)/(2*L2)*log(1/Rpp);   % attenuation coefficient (ref:Kucukcoban)
 a0 = [alpha_kucu,alpha_kucu];   % coefficient attenuation evanescent waves
 b0 = [alpha_kucu,alpha_kucu];   % coefficient attenuation propagating waves
-a0 = [10,10];
-b0 = [10,10]; 
+a0 = [0,0];
+b0 = [0,0]; 
 x0 = L1;                       % start of the PML
 % From local to global and in 2D
 global_pos_elemB = zeros(ng^2*dof,size(TB,1));
@@ -116,9 +116,9 @@ for i=1:length(dt)
     CCB = assemble_effCB_PML(bulk,mu,cs,b_scal,dt(i),XB,TB,a0,b0,x0,L2,h,n,dof);
     
     % Calculation of Amplification matrices
-    A = calculation_amplification_A(dt(i),beta,gamma,bulk,mu,ng,TB,...
+    A = Copy_of_calculation_amplification_A(dt(i),beta,gamma,bulk,mu,ng,TB,...
     XB,L2,n,a0,b0,x0,h,cs,b_scal,MB,CB,CCB,KB,KKB,nnodes,dof); 
-    B = calculation_amplification_B(dt(i),beta,gamma,bulk,mu,ng,TB,...
+    B = Copy_of_calculation_amplification_B(dt(i),beta,gamma,bulk,mu,ng,TB,...
     XB,L2,n,a0,b0,x0,h,cs,b_scal,MB,CB,CCB,KB,KKB,nnodes,dof);
     % Calculation of the amplification matrix
     A_xi(:,:,i) = A^(-1) * (-B);

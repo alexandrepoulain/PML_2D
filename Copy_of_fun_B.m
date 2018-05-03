@@ -1,4 +1,4 @@
-function [Mat_B, Mat_Bp] = fun_B(a0,b0,L2,n,x0,h,cs,b_scal,Xe,eta,ksi,dt,k)
+function [Mat_B, Mat_Bp, Mat_Be] = Copy_of_fun_B(a0,b0,L2,n,x0,h,cs,b_scal,Xe,eta,ksi,dt,k)
 % This function calculates the matrices B and Bp
 % Inputs: a0,b0 : coefficients of attenuation in both directions
 %         x0: start of PML in x direction
@@ -69,7 +69,7 @@ for kk=1:4
    Btp = [Ntp(1) 0; 0 Ntp(2); Ntp(2) Ntp(1)];
    Mat_B(:,ind:ind+1) = Bte + dt*Btp;
    Mat_Bp(:,ind:ind+1) = Btp;
-
+   Mat_Be(:,ind:ind+1) = Bte;
    ind=ind+2;
 end
 
